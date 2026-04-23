@@ -4,25 +4,25 @@
 local module = {}
 
 function module.apply_to_config(config)
-  -- WSL (Ubuntu) を自動起動
-  -- tmux も自動起動する場合は下のコメントを切り替える
-
-  -- パターン A: WSL のみ起動
-  config.default_prog = { 'wsl.exe', '--distribution', 'Ubuntu' }
-
-  -- パターン B: WSL + tmux 自動起動（セッション名: main）
-  -- 既存セッションがあればアタッチ、なければ新規作成
-  -- config.default_prog = {
-  --   'wsl.exe', '--distribution', 'Ubuntu', '--',
-  --   'bash', '-lc', 'tmux new-session -A -s main'
-  -- }
-
-  -- パターン C: WSL + カスタム tmux スクリプト
-  -- ペインレイアウトを細かく制御したい場合
-  -- config.default_prog = {
-  --   'wsl.exe', '--distribution', 'Ubuntu', '--',
-  --   'bash', '-lc', '$HOME/.local/bin/start-tmux.sh'
-  -- }
+  -- WSL (Ubuntu) + tmux 自動起動
+  -- 既存セッションがあればアタッチ、なければ 3 ペインレイアウトで新規作成
+  -- レイアウト:
+  --   ┌──────┬──────┐
+  --   │  上左 │  上右 │
+  --   ├──────┴──────┤
+  --   │     下      │
+  --   └─────────────┘
+  config.default_prog = {
+    'wsl.exe', '--distribution', 'Ubuntu', '--cd', '~/workspace', '--',
+    'bash', '-lc',
+    'tmux has-session -t main 2>/dev/null && tmux attach-session -t main || '
+      .. '(tmux new-session -d -s main'
+      .. ' && tmux split-window -v -t main:0.0'
+      .. ' && tmux split-window -h -t main:0.0'
+      .. ' && tmux select-pane -t main:0.0'
+      .. ' && tmux attach-session -t main);'
+      .. ' exec bash -l'
+  }
 
   -- デフォルト作業ディレクトリ
   -- config.default_cwd = 'C:\\Users\\<ユーザー名>\\projects'

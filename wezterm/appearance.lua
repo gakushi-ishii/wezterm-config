@@ -23,7 +23,7 @@ function module.apply_to_config(config)
   -- ウィンドウ設定
   config.initial_cols = 140
   config.initial_rows = 35
-  config.window_decorations = 'RESIZE'
+  config.window_decorations = 'TITLE | RESIZE'
   config.window_background_opacity = 0.95
   config.window_padding = {
     left = 8,
