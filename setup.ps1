@@ -16,24 +16,27 @@ Write-Host "Source: $sourceDir"
 Write-Host "Target: $targetDir"
 Write-Host ""
 
-# 既存の設定をバックアップ
+# 既存の .wezterm.lua をバックアップ
 $oldConfig = Join-Path $env:USERPROFILE ".wezterm.lua"
 if (Test-Path $oldConfig) {
     $backup = "$oldConfig.backup"
-    Write-Host "既存の .wezterm.lua をバックアップ: $backup" -ForegroundColor Yellow
+    Write-Host "Backup .wezterm.lua -> $backup" -ForegroundColor Yellow
     Copy-Item $oldConfig $backup -Force
 }
 
-# ターゲットディレクトリが既に存在する場合
+# ターゲットが既に存在する場合は削除またはバックアップ
 if (Test-Path $targetDir) {
-    $isLink = (Get-Item $targetDir).Attributes -band [System.IO.FileAttributes]::ReparsePoint
-    if ($isLink) {
-        Write-Host "既存のシンボリックリンクを削除します" -ForegroundColor Yellow
-        Remove-Item $targetDir -Force
-    } else {
+    $item = Get-Item $targetDir
+    if ($item.LinkType -eq "SymbolicLink") {
+        Write-Host "Removing existing symlink" -ForegroundColor Yellow
+        $item.Delete()
+    }
+    else {
         $backup = "$targetDir.backup"
-        Write-Host "既存の設定ディレクトリをバックアップ: $backup" -ForegroundColor Yellow
-        if (Test-Path $backup) { Remove-Item $backup -Recurse -Force }
+        Write-Host "Backup existing config -> $backup" -ForegroundColor Yellow
+        if (Test-Path $backup) {
+            Remove-Item $backup -Recurse -Force
+        }
         Move-Item $targetDir $backup
     }
 }
@@ -48,7 +51,7 @@ if (-not (Test-Path $parentDir)) {
 New-Item -ItemType SymbolicLink -Path $targetDir -Target $sourceDir | Out-Null
 
 Write-Host ""
-Write-Host "セットアップ完了!" -ForegroundColor Green
-Write-Host "シンボリックリンク: $targetDir -> $sourceDir"
+Write-Host "Setup complete!" -ForegroundColor Green
+Write-Host "Symlink: $targetDir -> $sourceDir"
 Write-Host ""
-Write-Host "WezTerm を再起動するか CTRL+SHIFT+R で設定をリロードしてください。"
+Write-Host "Restart WezTerm or press CTRL+SHIFT+R to reload config."
